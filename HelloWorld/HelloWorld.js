@@ -21,7 +21,7 @@ function _look_around(repeat = true) {
     null,                   // speed (we use duration instead)
     1);                     // movement duration (in s)
 
-  // register the timer even again so it becomes a loop
+  // register the timer event again so it becomes a loop
   // (while repeat is true)
   if (repeat) misty.RegisterTimerEvent(
     "look_around",
