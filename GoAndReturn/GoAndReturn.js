@@ -18,7 +18,7 @@ function _registerKeyPhraseRecognition() {
   misty.StartKeyPhraseRecognition(false);
 
   // register event
-  misty.RegisterEvent("KeyPhraseRec", "KeyPhraseRecognized", 1000, false);
+  misty.RegisterEvent("KeyPhraseRec", "KeyPhraseRecognized", 1000);
 }
 
 function _registerTOF() {
@@ -31,10 +31,23 @@ function _registerTOF() {
   misty.RegisterEvent("FrontTOF", "TimeOfFlight", 250);
 }
 
+function _registerHeadTouch() {
+  // filter out chin and scruff events (the rest are for the head)
+  misty.AddPropertyTest("HeadTouch", "SensorPosition", "!==", "Chin", "string");
+  misty.AddPropertyTest("HeadTouch", "SensorPosition", "!==", "Scruff", "string");
+  // only events when the sensor is released
+  misty.AddPropertyTest("HeadTouch", "IsContacted", "==", "false", "boolean");
+
+  // register event
+  misty.RegisterEvent("HeadTouch", "TouchSensor", 1000);
+}
+
 // --------------- callbacks ---------------
 
 function _KeyPhraseRec(data) {
-  misty.Debug("keyphrase recognized...");
+  misty.Debug("keyphrase recognized");
+  // play audio
+  misty.PlayAudio("001-Veep.wav", 50);
 
   goForward();
 }
@@ -44,11 +57,21 @@ function _FrontTOF(data) {
   var frontTOF = data.PropertyTestResults[0].PropertyParent;
   // output sensor data
   misty.Debug("distance: " + frontTOF.DistanceInMeters);
-  misty.Debug("sensor Position: " + frontTOF.SensorPosition);
 
-  // stop misty
   misty.Debug("stopping misty...");
+  // stop misty
   misty.Stop();
+  //play audio
+  misty.PlayAudio("013-Surprised-Ahghh.wav", 50);
+}
+
+function _HeadTouch(data) {
+  // get sensor data
+  var headTouch =  data.PropertyTestResults[0].PropertyParent;
+  // output which sensor was triggered
+  misty.Debug("sensor touched: " + headTouch.SensorPosition);
+  // play audio
+  misty.PlayAudio("002-Growl-01.wav", 50);
 }
 
 // --------------- wrappers ----------------
@@ -60,6 +83,7 @@ function goForward() {
     10000);   // time in ms
 
   _registerTOF();
+  _registerHeadTouch();
 }
 
 // --------------- main code ---------------
