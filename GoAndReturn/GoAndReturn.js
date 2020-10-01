@@ -48,7 +48,9 @@ function _KeyPhraseRec(data) {
   misty.Debug("keyphrase recognized");
   // play audio
   misty.PlayAudio("001-Veep.wav", 50);
-
+  // wait for audio to finish
+  misty.Pause(3000);
+  // drive forward
   goForward();
 }
 
@@ -89,5 +91,8 @@ function goForward() {
 // --------------- main code ---------------
 
 misty.Debug("starting skill GoAndReturn");
+// move head to center
+misty.MoveHead(0, 0, 0);
+// start keyphrase recognition
 _registerKeyPhraseRecognition();
 
