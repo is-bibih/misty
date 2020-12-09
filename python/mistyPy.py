@@ -45,6 +45,7 @@ import json
 import threading
 import time
 import websocket
+import base64
 
 try:
     import thread
@@ -88,11 +89,11 @@ class Robot:
             print(file_name,"not found on the robot, use <robot_name>.printAudioList() to see the list of saved audio files")
 
     def uploadAudio(self, file_name, apply=False, overwrite=False):
-        url = 'http://' + self.ip + '/api/audio'    
-        with open(file_name, 'rb') as f:            
-         encoded_string = base64.b64encode(f.read()).decode('ascii')                
-         data={"FileName": file_name, "Data": encoded_string, "ImmediatelyApply" : apply, "OverwriteExisting": overwrite}            
-         requests.post(url, json=data)        
+        url = 'http://' + self.ip + '/api/audio'
+        with open(file_name, 'rb') as f:
+         encoded_string = base64.b64encode(f.read()).decode('ascii')
+         data={"FileName": file_name, "Data": encoded_string, "ImmediatelyApply" : apply, "OverwriteExisting": overwrite}
+         requests.post(url, json=data)
 
     def battery(self):
         resp = requests.get('http://' + self.ip + '/api/battery')
@@ -113,10 +114,10 @@ class Robot:
 
     def moveHeadPosition(self, pitch, roll, yaw, velocity):
         self.moveHead(pitch, roll, yaw, velocity, "position")
-    
+
     def moveHeadRadians(self, pitch, roll, yaw, velocity):
         self.moveHead(pitch, roll, yaw, velocity, "radians")
-    
+
     def moveHeadDegrees(self, pitch, roll, yaw, velocity):
         self.moveHead(pitch, roll, yaw, velocity, "degrees")
 
@@ -128,16 +129,16 @@ class Robot:
         assert -100 <= linear_velocity <= 100 and -100 <= angular_velocity <=100, " drive: The velocities needs to be in the range -100 to 100"
         assert isinstance(time_in_milli_second, int) or isinstance(time_in_milli_second, float), " driveTime: Time should be an integer or float and the unit is milli seconds"
         json = {"LinearVelocity": linear_velocity,"AngularVelocity": angular_velocity, "TimeMS": time_in_milli_second}
-        
+
         requests.post('http://'+self.ip+'/api/drive/time',json = {"LinearVelocity": linear_velocity,"AngularVelocity": angular_velocity, "TimeMS": time_in_milli_second})
 
     def driveTrack(self,left_track_speed,right_track_speed):
         assert -100 <= left_track_speed <= 100 and right_track_speed in -100 <= right_track_speed <= 100, " driveTrack: The velocities needs to be in the range -100 to 100"
         requests.post('http://'+self.ip+'/api/drive/track',json={"LeftTrackSpeed": left_track_speed,"RightTrackSpeed": right_track_speed})
-    
+
     def stop(self):
         requests.post('http://'+self.ip+'/api/drive/stop')
-        
+
     def sendBackpack(self,message):
         assert isinstance(message, str), " sendBackpack: Message sent to the Backpack should be a string"
         requests.post('http://'+self.ip+'/api/serial',json={"Message": message})
@@ -162,22 +163,22 @@ class Robot:
 
     def printImageList(self):
         print(self.images_saved)
-    
+
     def getImageList(self):
         return self.images_saved
 
     def printAudioList(self):
         print(self.audio_saved)
-    
+
     def getAudioList(self):
         return self.audio_saved
-    
+
     def printSubscriptionList(self):
         print(self.available_subscriptions)
 
     def startFaceRecognition(self):
         requests.post('http://' + self.ip + '/api/faces/recognition/start')
-    
+
     def stopFaceRecognition(self):
         requests.post('http://'+self.ip+'/api/faces/recognition/stop')
 
@@ -213,7 +214,7 @@ class Robot:
 
     def moveArmPosition(self, arm, position, velocity):
         self.moveArm(arm, position, velocity, "postion")
-    
+
     def moveArmRadians(self, arm, position, velocity):
         self.moveArm(arm, position, velocity, "radians")
 
@@ -234,10 +235,10 @@ class Robot:
 
     def moveArmsDegrees(self, rightArmPosition, leftArmPosition, rightArmVelocity, leftArmVelocity):
         self.moveArms(rightArmPosition, leftArmPosition, rightArmVelocity, leftArmVelocity, "degrees")
-    
+
     def moveArmsPosition(self, rightArmPosition, leftArmPosition, rightArmVelocity, leftArmVelocity):
         self.moveArms(rightArmPosition, leftArmPosition, rightArmVelocity, leftArmVelocity, "position")
-    
+
     def moveArmsRadians(self, rightArmPosition, leftArmPosition, rightArmVelocity, leftArmVelocity):
         self.moveArms(rightArmPosition, leftArmPosition, rightArmVelocity, leftArmVelocity, "radians")
 
@@ -294,7 +295,7 @@ class Robot:
             return(json.loads(out))
         except:
             return json.loads(self.face_recognition_instance.data)
-        
+
 
     def subscribe(self,Type,value=None,debounce =0):
         assert isinstance(Type, str), " subscribe: type name need to be string"
@@ -322,10 +323,10 @@ class Robot:
                     self.startFaceRecognition()
                     print("FaceRecStarted")
                     self.face_recognition_instance = Socket(self.ip,Type,_value="ComputerVision", _debounce = debounce)
-                
+
         else:
             print(" subscribe: Type name - ",Type,"is not recognized by the robot, use <robot_name>.printSubscriptionList() to see the list of possible Type names")
-    
+
     def unsubscribe(self,Type):
         assert isinstance(Type, str), " unsubscribe: type name need to be string"
 
@@ -340,7 +341,7 @@ class Robot:
                     print("Unsubscribe:",Type, "is not subscribed")
 
             elif Type ==  "TimeOfFlight":
-                
+
                 if self.time_of_flight_instance[0] is not None:
                     for i in range(4):
                         self.time_of_flight_instance[i].unsubscribe()
@@ -362,20 +363,20 @@ class Robot:
             print(" unsubscribe: Type name - ",Type,"is not recognised by the robot, use <robot_name>.printSubscriptionList() to see the list of possible Type names")
 
 
-# Every web socket is considered an instance     
+# Every web socket is considered an instance
 class Socket:
 
     def __init__(self, ip,Type, _value = None, _debounce = 0):
 
         self.ip = ip
         self.Type  = Type
-        self.value = _value 
+        self.value = _value
         self.debounce = _debounce
         self.data = "{\"status\":\"Not_Subscribed or just waiting for data\"}"
         self.event_name = None
         self.ws = None
         self.initial_flag = True
-    
+
         dexter = threading.Thread(target=self.initiate)
         dexter.start()
 
@@ -390,7 +391,7 @@ class Socket:
             self.initial_flag = False
         else:
             self.data = message
-        
+
     def on_error(self,ws, error):
         print(error)
 
@@ -437,7 +438,7 @@ class Socket:
                 "Inequality": "=",
                 "Value": self.value
             }]}
-        
+
         elif Type == "FaceRecognition":
 
             subscribeMsg = {
@@ -460,17 +461,17 @@ class Socket:
                 "Message": ""}
 
         elif Type == "TimeOfFlight":
-            
+
             unsubscribeMsg = {
                 "Operation": "unsubscribe",
                 "EventName": self.event_name,
                 "Message": ""}
 
         elif Type == "FaceRecognition":
-            
+
             unsubscribeMsg = {
                 "Operation": "unsubscribe",
                 "EventName": self.event_name,
                 "Message": ""}
-        
+
         return unsubscribeMsg
