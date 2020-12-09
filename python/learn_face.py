@@ -9,9 +9,6 @@ name = "vivi"
 # create robot instance
 misty = Robot(IP)
 
-# check battery
-#print("battery: " + misty.battery())
-
 # learn a face
 print("about to start face learning...")
 time.sleep(5)
