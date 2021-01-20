@@ -66,16 +66,16 @@ class Robot:
     def wrapper_post(self, endpoint, params=None, timeout_ms=10000):
         """Do POST requests for the given endpoint."""
         url = self.api_url + endpoint
-        resp = requests.post(url, params=params, timeout=timeout_ms).json()
-        if not resp['result']:
-            raise Exception('POST operation was not succesful')
+        resp = requests.post(url, json=params, timeout=timeout_ms).json()
+        if resp['status'] == 'Failed':
+            raise Exception(resp['error'])
 
     def wrapper_delete(self, endpoint, params=None, timeout_ms=10000):
         """Do DELETE requests for the given endpoint."""
         url = self.api_url + endpoint
-        resp = requests.delete(url, params=params, timeout=timeout_ms).json()
-        if not resp['result']:
-            raise Exception('DELETE operation was not succesful')
+        resp = requests.delete(url, json=params, timeout=timeout_ms).json()
+        if resp['status'] == 'Failed':
+            raise Exception(resp)
 
     def get_audio_list(self):
         """Get list of Misty's saved audio files."""
@@ -98,10 +98,16 @@ class Robot:
         if data and file:
             raise Exception('Only one of data and file parameters may be used')
         endpoint = 'audio'
+        if isinstance(file, str):
+            with open(file, 'rb') as f:
+                file_bytes = f.read()
+        else:
+            file_bytes = file.getvalue()
+        encoded_string = base64.b64encode(file_bytes).decode('ascii')
+        data = encoded_string
         params = json.dumps({
             'FileName': file_name,
             'Data': data,
-            'File': file,
             'ImmediatelyApply': immediately_apply,
             'OverwriteExisting': overwrite_existing,
         })
@@ -120,7 +126,6 @@ class Robot:
         file_obj = BytesIO()
         sound = gtts.gTTS(msg, lang=lang, **kwargs)
         sound.write_to_fp(file_obj)
-        sound_str = base64.b64encode(file_obj).decode('ascii')
         self.save_audio(file_name, file=file_obj,
                         immediately_apply=True, overwrite_existing=True)
         if delete_after:
