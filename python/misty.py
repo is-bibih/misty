@@ -98,10 +98,12 @@ class Robot:
         if data and file:
             raise Exception('Only one of data and file parameters may be used')
         endpoint = 'audio'
-        if isinstance(file, str):
+        # try as pathlike
+        try:
             with open(file, 'rb') as f:
                 file_bytes = f.read()
-        else:
+        # try as bytes
+        except TypeError:
             file_bytes = file.getvalue()
         encoded_string = base64.b64encode(file_bytes).decode('ascii')
         data = encoded_string
