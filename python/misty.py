@@ -1,4 +1,4 @@
-from typing import Iterable, Tuple, TypeVar
+from typing import Iterable, Tuple, TypeVar, List
 from io import BytesIO
 import base64
 import requests
@@ -54,6 +54,30 @@ class Robot:
             conditions)
         self.websockets[event_name] = ws
 
+    def add_touch_sensor(self, event_name,
+                         sensor_position: List[str] = None, **kwargs):
+        """Adds a touch sensor WebSocket connection to the given sensor positions."""
+        sensors = ['Chin', 'HeadLeft', 'HeadRight', 'HeadBack', 'HeadFront', 'Scruff']
+        if not sensor_position:
+            conditions = None
+        # if only one sensor
+        elif isinstance(sensor_position, str):
+            if sensor_position in sensors:
+                conditions = [('sensorPosition', '==', sensor_position)]
+            else:
+                raise ValueError(f'Invalid sensor position {sensor_position}')
+        # if more than one sensor
+        else:
+            exclude_sensors = sensors.copy()
+            for sensor in sensor_position:
+                if not sensor in sensors:
+                    raise ValueError(f'Invalid sensor position {sensor}')
+                else:
+                    exclude_sensors.remove(sensor)
+            conditions = [('sensorPosition', '!=', sensor) \
+                          for sensor in exclude_sensors]
+        self.add_websocket('TouchSensor', event_name, conditions=conditions, **kwargs)
+
     def wrapper_get(self, endpoint, params=None, timeout_ms=10000):
         """Do GET requests for the given endpoint."""
         url = self.api_url + endpoint
@@ -76,6 +100,12 @@ class Robot:
         resp = requests.delete(url, json=params, timeout=timeout_ms).json()
         if resp['status'] == 'Failed':
             raise Exception(resp)
+
+    def set_default_volume(self, volume: int = 100):
+        """Sets new default volume for system audio in range [0, 100]"""
+        endpoint = 'audio/volume'
+        params = {'Volume': volume}
+        self.wrapper_post(endpoint, params=params)
 
     def get_audio_list(self):
         """Get list of Misty's saved audio files."""
@@ -161,6 +191,8 @@ class WebSocketStream:
 
     def generate_event_conditions(self, conditions: Conditions):
         """Generate event conditions list"""
+        if not conditions:
+            return None
         cond_dicts = [{'Property': p, 'Inequality': i, 'Value': v} for p, i, v in conditions]
         return cond_dicts
 
