@@ -1,0 +1,19 @@
+{
+  "Name": "Circle",
+  "UniqueId": "8da613e3-c79e-4c84-861c-e1552b83cedd",
+  "Description": "Spins in place for 30 s",
+  "StartupRules": [
+    "Manual",
+    "Robot"
+  ],
+  "Language": "javascript",
+  "BroadcastMode": "verbose",
+  "TimeoutInSeconds": 600,
+  "CleanupOnCancel": true,
+  "WriteToLog": false,
+  "Parameters": {
+    "int": 10,
+    "double": 20.5,
+    "string": "twenty"
+  }
+}
